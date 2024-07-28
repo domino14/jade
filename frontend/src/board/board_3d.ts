@@ -13,18 +13,58 @@ const bonusColors = {
   [BonusType.StartingSquare]: 0x000000, // doesn't have a color
 };
 
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+
+export type ArrowProperties = {
+  x: number;
+  y: number;
+  vertical: boolean;
+  show: boolean;
+};
+
+function createStylishArrow() {
+  const arrowGroup = new THREE.Group();
+
+  // Shaft
+  const shaftGeometry = new THREE.CylinderGeometry(0.1, 0.1, 2, 32);
+  const shaftMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+  const shaft = new THREE.Mesh(shaftGeometry, shaftMaterial);
+  shaft.position.set(0, 0, -1);
+  arrowGroup.add(shaft);
+
+  // Head
+  const headGeometry = new THREE.ConeGeometry(0.2, 0.5, 32);
+  const headMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+  const head = new THREE.Mesh(headGeometry, headMaterial);
+  head.position.set(0, 0, 1);
+  arrowGroup.add(head);
+
+  // Tail
+  const tailGeometry = new THREE.SphereGeometry(0.1, 32, 32);
+  const tailMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+  const tail = new THREE.Mesh(tailGeometry, tailMaterial);
+  tail.position.set(0, 0, -2);
+  arrowGroup.add(tail);
+
+  return arrowGroup;
+}
+
 function addGameBoard(
   scene: THREE.Scene,
+  camera: THREE.Camera,
   layout: string[],
   boardThickness: number,
   gridSize: number,
   squareSize: number,
-  wallThickness: number,
-  wallHeight: number,
   gridHeight: number,
-  offset: number
+  offset: number,
+  squareClickHandler: (object: THREE.Object3D) => void,
+  arrow: ArrowProperties
 ) {
   // Create the circular board
+  const wallThickness = 0.25;
+  const wallHeight = 0.55;
   const boardGeometry = new THREE.CylinderGeometry(55, 55, boardThickness, 64);
   const boardMaterial = new THREE.MeshPhongMaterial({
     color: boardColor,
@@ -62,6 +102,9 @@ function addGameBoard(
         j * squareSize - offset,
         gridBottomZPos + gridHeight / 2
       );
+      square.userData.isBoardSquare = true; // Mark this mesh as a board square
+      square.userData.gridX = i;
+      square.userData.gridY = j;
       scene.add(square);
 
       // Create thin walls around each square
@@ -126,29 +169,49 @@ function addGameBoard(
         gridBottomZPos + gridHeight
       );
       scene.add(rightWall);
+
+      if (arrow.show && arrow.x === i && arrow.y === j) {
+        console.log("adding arrow", arrow);
+        const arrowMesh = createStylishArrow();
+        scene.add(arrowMesh);
+      }
     }
+  }
+  const container = document.getElementById("boardEl");
+  // Add event listener for mouse clicks
+  if (container) {
+    container.addEventListener(
+      "click",
+      (event: MouseEvent) =>
+        onMouseClick(event, camera, scene, container, squareClickHandler),
+      false
+    );
+  }
+}
+
+function onMouseClick(
+  event: MouseEvent,
+  camera: THREE.Camera,
+  scene: THREE.Scene,
+  container: HTMLElement,
+  squareClickHandler: (object: THREE.Object3D) => void
+) {
+  const rect = container.getBoundingClientRect();
+
+  // Calculate mouse position in normalized device coordinates (-1 to +1)
+  mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+  mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+  // Update the raycaster with the camera and mouse position
+  raycaster.setFromCamera(mouse, camera);
+
+  // Calculate objects intersecting the raycaster
+  const intersects = raycaster.intersectObjects(scene.children, true);
+
+  if (intersects.length > 0) {
+    const intersectedObject = intersects[0].object;
+    squareClickHandler(intersectedObject);
   }
 }
 
 export default addGameBoard;
-
-// const fontLoader = new FontLoader();
-// fontLoader.load(
-//   "https://threejs.org/examples/fonts/helvetiker_regular.typeface.json",
-//   (font) => {
-//     const createTile = (
-//       letter: string,
-//       score: number,
-//       x: number,
-//       y: number
-//     ) => {};
-
-//     // Example: create a few tiles
-//     createTile("A", 1, 1, 1);
-//     createTile("B", 3, 2, 2);
-//     createTile("C", 3, 3, 3);
-//     createTile("Q", 10, 4, 4);
-//     createTile("M", 3, 5, 4);
-//     createTile("W", 4, 6, 4);
-//   }
-// );

@@ -20,6 +20,7 @@ function App() {
   );
   const [config, setConfig] = useState<main.Config>();
   const [opened, { toggle }] = useDisclosure();
+  const [is2D, setIs2D] = useState(false);
   Config().then((cfg) => setConfig(cfg));
 
   return (
@@ -48,6 +49,7 @@ function App() {
                 hiddenFrom="sm"
                 size="sm"
               />
+              <Button onClick={() => setIs2D((p) => !p)}>Toggle 3D</Button>
             </Group>
           </AppShell.Header>
           <AppShell.Navbar p="md">
@@ -60,7 +62,7 @@ function App() {
           </AppShell.Navbar>
           <AppShell.Main>
             {/* <Board rows={15} cols={15}></Board> */}
-            <BoardScene />
+            <BoardScene is2D={is2D} />
           </AppShell.Main>
           <AppShell.Aside p="md">Aside</AppShell.Aside>
           <AppShell.Footer p="md">Footer</AppShell.Footer>
