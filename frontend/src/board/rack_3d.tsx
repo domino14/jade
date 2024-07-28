@@ -1,15 +1,17 @@
+import { Extrude } from "@react-three/drei";
 import * as THREE from "three";
 
-export const createRack = (
-  rackWidth: number,
-  rackHeight: number,
-  rackDepth: number,
-  x: number,
-  y: number,
-  z: number
-) => {
-  const sceneShapes = [];
+type RackProps = {
+  rackWidth: number;
+  rackHeight: number;
+  rackDepth: number;
+  x: number;
+  y: number;
+  z: number;
+};
 
+const Rack = (props: RackProps) => {
+  const { rackWidth, rackHeight, rackDepth, x, y, z } = props;
   const shape = new THREE.Shape();
 
   const height1 = rackHeight * 0.4;
@@ -64,23 +66,20 @@ export const createRack = (
     bevelEnabled: false,
   };
 
-  const rackGeometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
-  const rackMaterial = new THREE.MeshPhongMaterial({
-    color: 0xffd700, // Brown color for the rack
-    specular: 0xffd700,
-    shininess: 1200,
-  });
-  const rack = new THREE.Mesh(rackGeometry, rackMaterial);
-  rack.position.set(x, y, z);
-  rack.rotation.x = Math.PI / 2;
-  rack.rotation.y = (3 * Math.PI) / 2;
-  // rack.rotation.z = Math.PI;
-  sceneShapes.push(rack);
-
-  return {
-    sceneShapes,
-    slope,
-    controlPointX,
-    controlPointY,
-  };
+  return (
+    <Extrude
+      args={[shape, extrudeSettings]}
+      position={[x, y, z]}
+      rotation={[Math.PI / 2, (3 * Math.PI) / 2, 0]}
+    >
+      <meshPhongMaterial
+        attach="material"
+        color={0xffd700}
+        specular={0xffd700}
+        shininess={1200}
+      />
+    </Extrude>
+  );
 };
+
+export default Rack;
