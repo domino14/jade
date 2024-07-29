@@ -20,7 +20,7 @@ function App() {
   );
   const [config, setConfig] = useState<main.Config>();
   const [opened, { toggle }] = useDisclosure();
-  const [is2D, setIs2D] = useState(false);
+  const [is2D, setIs2D] = useState(true);
   Config().then((cfg) => setConfig(cfg));
 
   return (

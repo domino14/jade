@@ -10,28 +10,42 @@ type RackProps = {
   z: number;
 };
 
+export const rackGeomParams = (rackHeight: number, rackDepth: number) => {
+  const height1 = rackHeight * 0.4;
+  const height2 = rackHeight * 0.3;
+
+  const depth1 = 0.16 * rackDepth;
+  const depth2 = 0.4 * rackDepth;
+  const depth3 = 0.8 * rackDepth;
+  const radius1 = 0.015 * rackDepth;
+  const radius2 = 0.16 * rackDepth;
+  const slope = (rackHeight - radius1 - height2) / (depth2 + radius1 - depth3);
+  return {
+    height1,
+    height2,
+    depth1,
+    depth2,
+    depth3,
+    radius1,
+    radius2,
+    slope,
+  };
+};
+
 const Rack = (props: RackProps) => {
   const { rackWidth, rackHeight, rackDepth, x, y, z } = props;
   const shape = new THREE.Shape();
 
-  const height1 = rackHeight * 0.4;
-  const height2 = rackHeight * 0.3;
-  const fullHeight = rackHeight;
-
-  const width1 = 0.16 * rackWidth;
-  const width2 = 0.4 * rackWidth;
-  const width3 = 0.8 * rackWidth;
-  const fullWidth = rackWidth;
-  const radius1 = 0.015 * rackWidth;
-  const radius2 = 0.16 * rackWidth;
+  const { height1, height2, depth1, depth2, depth3, radius1, radius2 } =
+    rackGeomParams(props.rackHeight, props.rackDepth);
 
   shape.moveTo(radius1, 0); // Start with a rounded corner
-  shape.lineTo(fullWidth - radius1, 0);
-  shape.quadraticCurveTo(fullWidth, 0, fullWidth, radius1); // Bottom right corner
-  shape.lineTo(fullWidth, height2);
+  shape.lineTo(rackDepth - radius1, 0);
+  shape.quadraticCurveTo(rackDepth, 0, rackDepth, radius1); // Bottom right corner
+  shape.lineTo(rackDepth, height2);
 
   // Define control points for the large arc
-  const controlPointX = (fullWidth + width3) / 2;
+  const controlPointX = (rackDepth + depth3) / 2;
   const controlPointY = height2 + radius2;
 
   // Draw the large arc using bezierCurveTo
@@ -40,21 +54,19 @@ const Rack = (props: RackProps) => {
     controlPointY,
     controlPointX,
     height2,
-    width3,
+    depth3,
     height2
   );
 
-  shape.lineTo(width2 + radius1, fullHeight - radius1);
-  // The slope of the rack. Needed for placing the tile on it.
-  const slope = (fullHeight - radius1 - height2) / (width2 + radius1 - width3);
+  shape.lineTo(depth2 + radius1, rackHeight - radius1);
 
-  shape.quadraticCurveTo(width2, fullHeight, width2 - radius1, fullHeight);
-  shape.lineTo(width1 + radius1, fullHeight);
+  shape.quadraticCurveTo(depth2, rackHeight, depth2 - radius1, rackHeight);
+  shape.lineTo(depth1 + radius1, rackHeight);
   shape.quadraticCurveTo(
-    width1,
-    fullHeight,
-    width1 - radius1,
-    fullHeight - radius1
+    depth1,
+    rackHeight,
+    depth1 - radius1,
+    rackHeight - radius1
   );
   shape.lineTo(0, height1);
   shape.lineTo(0, radius1);
@@ -62,7 +74,7 @@ const Rack = (props: RackProps) => {
 
   const extrudeSettings = {
     steps: 1,
-    depth: rackDepth,
+    depth: rackWidth,
     bevelEnabled: false,
   };
 
