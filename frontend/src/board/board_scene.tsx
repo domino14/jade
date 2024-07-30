@@ -1,12 +1,13 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { ArrowProperties } from "./board_3d";
 import { Canvas } from "@react-three/fiber";
 import GameBoard from "./board_3d";
 import { CrosswordGameGridLayout } from "./board_layout";
 import Rack, { rackGeomParams } from "./rack_3d";
-import { OrbitControls } from "@react-three/drei";
+import { Extrude, OrbitControls } from "@react-three/drei";
 import Tile from "./tile_3d";
 import Cameras from "./cameras_3d";
+import * as THREE from "three";
 
 type BoardSceneProps = {
   is2D: boolean;
@@ -70,14 +71,33 @@ const BoardTile = (props: BoardTileProps) => {
   );
 };
 
-// const positionTileOnRack = (tile: THREE.Group, pos: number) => {
-//   const xpos = -rackWidth / 2 + squareSize + pos * (squareSize - 0.6);
-//   const ypos = rackYPos - squareSize - 0.9;
-//   const zpos = -0.15;
-//   tile.position.set(xpos, ypos, boardThickness / 2 + gridHeight + zpos);
-//   tile.rotation.x = -Math.atan(rackSlope);
-// };
+function StylishArrow() {
+  // Define the arrow shape
+  const arrowShape = new THREE.Shape();
+  arrowShape.moveTo(0, 0);
+  arrowShape.lineTo(1, 0);
+  arrowShape.lineTo(1, 3);
+  arrowShape.lineTo(2.5, 3);
+  arrowShape.lineTo(0.5, 5);
+  arrowShape.lineTo(-1.5, 3);
+  arrowShape.lineTo(0, 3);
+  arrowShape.lineTo(0, 0);
 
+  // Extrude settings with bevel
+  const extrudeSettings = {
+    depth: 1,
+    bevelEnabled: true,
+    bevelThickness: 0.1,
+    bevelSize: 0.1,
+    bevelSegments: 2,
+  };
+
+  return (
+    <Extrude args={[arrowShape, extrudeSettings]}>
+      <meshPhongMaterial color={0x00ffbd} specular={0xffffff} shininess={10} />
+    </Extrude>
+  );
+}
 const RackTile = (props: RackTileProps) => {
   let xpos =
     -rackWidth / 2 +
@@ -112,7 +132,24 @@ const BoardScene = (props: BoardSceneProps) => {
     show: false,
   });
 
-  console.log("is2D", props.is2D);
+  const squareClickHandler = useCallback(
+    (i: number, j: number) => {
+      if (!arrow.show) {
+        setArrow({ x: i, y: j, vertical: false, show: true });
+      } else {
+        if (arrow.x === i && arrow.y === j) {
+          if (!arrow.vertical) {
+            setArrow({ x: i, y: j, vertical: true, show: true });
+          } else {
+            setArrow({ x: i, y: j, vertical: false, show: false });
+          }
+        } else {
+          setArrow({ x: i, y: j, vertical: false, show: true });
+        }
+      }
+    },
+    [arrow]
+  );
 
   return (
     <Canvas
@@ -132,9 +169,27 @@ const BoardScene = (props: BoardSceneProps) => {
         squareSize={squareSize}
         gridHeight={gridHeight}
         offset={offset}
-        squareClickHandler={() => {}}
+        squareClickHandler={squareClickHandler}
         arrow={arrow}
       />
+      {arrow.show && (
+        <group
+          position={[
+            arrow.x * squareSize -
+              offset -
+              (arrow.vertical ? -squareSize / 15 : squareSize / 2.5),
+            arrow.y * squareSize -
+              offset +
+              (arrow.vertical ? squareSize / 2.5 : squareSize / 15),
+            boardTileZPos,
+          ]}
+          rotation={[0, 0, arrow.vertical ? Math.PI : -Math.PI / 2]}
+          scale={[0.85, 0.85, 0.85]}
+        >
+          <StylishArrow />
+        </group>
+      )}
+
       <Rack
         rackWidth={rackWidth}
         rackHeight={rackHeight}
