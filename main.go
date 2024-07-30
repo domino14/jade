@@ -2,6 +2,7 @@ package main
 
 import (
 	"embed"
+	"fmt"
 	"os"
 	"runtime"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/menu/keys"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
+	wailsruntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 //go:embed all:frontend/dist
@@ -26,7 +28,8 @@ func main() {
 
 	AppMenu := menu.NewMenu()
 	FileMenu := AppMenu.AddSubmenu("File")
-	// FileMenu.AddText("&Open", keys.CmdOrCtrl("o"), openFile)
+	FileMenu.AddText("New", keys.CmdOrCtrl("n"), app.newGame)
+	FileMenu.AddText("Open", keys.CmdOrCtrl("o"), app.openFile)
 	FileMenu.AddSeparator()
 	FileMenu.AddText("Quit", keys.CmdOrCtrl("q"), func(_ *menu.CallbackData) {
 		os.Exit(0)
@@ -54,4 +57,29 @@ func main() {
 	if err != nil {
 		println("Error:", err.Error())
 	}
+}
+
+func (a *App) newGame(d *menu.CallbackData) {
+	fmt.Println("foo")
+}
+
+func (a *App) openFile(d *menu.CallbackData) {
+	f, err := wailsruntime.OpenFileDialog(a.ctx, wailsruntime.OpenDialogOptions{
+		Title: "Select a *.gcg or *.gdoc file",
+		Filters: []wailsruntime.FileFilter{
+			{
+				DisplayName: "Generic Crossword Game files (*.gcg)",
+				Pattern:     "*.gcg",
+			},
+			{
+				DisplayName: "Game Document files (*.gdoc)",
+				Pattern:     "*.gdoc",
+			},
+		},
+	})
+	if err != nil {
+		fmt.Println("error", err)
+		return
+	}
+	fmt.Println("file", f)
 }

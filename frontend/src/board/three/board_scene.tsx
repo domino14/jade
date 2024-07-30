@@ -1,12 +1,12 @@
 import { useCallback, useMemo, useState } from "react";
-import { ArrowProperties } from "./board_3d";
+import { ArrowProperties } from "./board";
 import { Canvas } from "@react-three/fiber";
-import GameBoard from "./board_3d";
-import { CrosswordGameGridLayout } from "./board_layout";
-import Rack, { rackGeomParams } from "./rack_3d";
+import GameBoard from "./board";
+import { CrosswordGameGridLayout } from "../board_layout";
+import Rack, { rackGeomParams } from "./rack";
 import { Extrude, OrbitControls } from "@react-three/drei";
-import Tile from "./tile_3d";
-import Cameras from "./cameras_3d";
+import Tile from "./tile";
+import Cameras from "./cameras";
 import * as THREE from "three";
 
 type BoardSceneProps = {

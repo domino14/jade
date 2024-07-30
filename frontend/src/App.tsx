@@ -7,7 +7,7 @@ import { useDisclosure } from "@mantine/hooks";
 import { Button, createTheme, MantineProvider, TextInput } from "@mantine/core";
 import Board from "./board/board";
 import { main } from "../wailsjs/go/models";
-import BoardScene from "./board/board_scene";
+import BoardScene from "./board/three/board_scene";
 
 const theme = createTheme({
   fontFamily: "Open Sans, sans-serif",
@@ -15,9 +15,6 @@ const theme = createTheme({
 });
 
 function App() {
-  const [resultText, setResultText] = useState(
-    "Please enter your name below 👇"
-  );
   const [config, setConfig] = useState<main.Config>();
   const [opened, { toggle }] = useDisclosure();
   const [is2D, setIs2D] = useState(true);
@@ -61,7 +58,6 @@ function App() {
               ))}
           </AppShell.Navbar>
           <AppShell.Main>
-            {/* <Board rows={15} cols={15}></Board> */}
             <BoardScene is2D={is2D} />
           </AppShell.Main>
           <AppShell.Aside p="md">Aside</AppShell.Aside>
