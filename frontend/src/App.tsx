@@ -1,12 +1,12 @@
-import { useState } from "react";
-import { Config } from "../wailsjs/go/main/App";
+import { useEffect, useState } from "react";
+import { ActiveGame, Config } from "../wailsjs/go/main/App";
 import "@mantine/core/styles.css";
 import { AppShell, Burger, Group, Skeleton } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 
 import { Button, createTheme, MantineProvider, TextInput } from "@mantine/core";
 import Board from "./board/board";
-import { main } from "../wailsjs/go/models";
+import { ipc, main } from "../wailsjs/go/models";
 import BoardScene from "./board/three/board_scene";
 
 const theme = createTheme({
@@ -16,10 +16,18 @@ const theme = createTheme({
 
 function App() {
   const [config, setConfig] = useState<main.Config>();
+  const [activeGame, setActiveGame] = useState<ipc.GameDocument>();
   const [opened, { toggle }] = useDisclosure();
   const [is2D, setIs2D] = useState(true);
-  Config().then((cfg) => setConfig(cfg));
 
+  useEffect(() => {
+    Config().then((cfg) => {
+      console.log("settin cfg");
+      setConfig(cfg);
+    });
+
+    ActiveGame().then((ag) => setActiveGame(ag));
+  }, []);
   return (
     <MantineProvider theme={theme} defaultColorScheme="dark">
       <div id="App">

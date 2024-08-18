@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { BonusType } from "../board_layout";
+import { BonusType } from "../../constants/board_layout";
 import { Box, Cylinder } from "@react-three/drei";
 import React from "react";
 

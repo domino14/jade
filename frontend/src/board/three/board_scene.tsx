@@ -2,15 +2,19 @@ import { useCallback, useMemo, useState } from "react";
 import { ArrowProperties } from "./board";
 import { Canvas } from "@react-three/fiber";
 import GameBoard from "./board";
-import { CrosswordGameGridLayout } from "../board_layout";
+import { CrosswordGameGridLayout } from "../../constants/board_layout";
 import Rack, { rackGeomParams } from "./rack";
 import { Extrude, OrbitControls } from "@react-three/drei";
 import Tile from "./tile";
 import Cameras from "./cameras";
 import * as THREE from "three";
+import { ipc } from "../../../wailsjs/go/models";
+import { Board } from "../../utils/cwgame/board";
 
 type BoardSceneProps = {
   is2D: boolean;
+  board?: ipc.GameBoard;
+  rack?: number[];
 };
 
 const gridSize = 15;

@@ -13,6 +13,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
 	wailsruntime "github.com/wailsapp/wails/v2/pkg/runtime"
+	"github.com/woogles-io/liwords/rpc/api/proto/ipc"
 )
 
 //go:embed all:frontend/dist
@@ -22,13 +23,14 @@ func main() {
 	cfg := &Config{}
 	cfg.Load(os.Args[1:])
 	log.Info().Msgf("Loaded config: %v", cfg)
+	log.Info().Msgf("data_path: %s", cfg.GetString("data-path"))
 
 	// Create an instance of the app structure
 	app := NewApp(cfg)
 
 	AppMenu := menu.NewMenu()
 	FileMenu := AppMenu.AddSubmenu("File")
-	FileMenu.AddText("New", keys.CmdOrCtrl("n"), app.newGame)
+	FileMenu.AddText("New", keys.CmdOrCtrl("n"), app.startNewGame)
 	FileMenu.AddText("Open", keys.CmdOrCtrl("o"), app.openFile)
 	FileMenu.AddSeparator()
 	FileMenu.AddText("Quit", keys.CmdOrCtrl("q"), func(_ *menu.CallbackData) {
@@ -59,8 +61,12 @@ func main() {
 	}
 }
 
-func (a *App) newGame(d *menu.CallbackData) {
-	fmt.Println("foo")
+func (a *App) startNewGame(d *menu.CallbackData) {
+	gdoc, err := a.NewGame("NWL23", "CrosswordGame", "english", ipc.ChallengeRule_ChallengeRule_DOUBLE, "Cesitar", "Luqui")
+	if err != nil {
+		println("Error starting new game:", err.Error())
+	}
+	a.activeCWGame = gdoc
 }
 
 func (a *App) openFile(d *menu.CallbackData) {
