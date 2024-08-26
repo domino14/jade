@@ -17,3 +17,7 @@ export function Greet(arg1) {
 export function NewGame(arg1, arg2, arg3, arg4, arg5, arg6) {
   return window['go']['main']['App']['NewGame'](arg1, arg2, arg3, arg4, arg5, arg6);
 }
+
+export function SelectDataDirectory() {
+  return window['go']['main']['App']['SelectDataDirectory']();
+}

@@ -76,3 +76,22 @@ func (c *Config) Load(args []string) error {
 
 	return nil
 }
+
+func (c *Config) Write() error {
+	werr := c.WriteConfig()
+	if _, ok := werr.(viper.ConfigFileNotFoundError); ok {
+
+		if _, err := os.Stat(c.configPath); os.IsNotExist(err) {
+			// Directory does not exist, create it
+			err = os.Mkdir(c.configPath, 0700)
+			if err != nil {
+				return err
+			}
+			log.Info().Msgf("Directory created: %s", c.configPath)
+		} else if err != nil {
+			return err
+		}
+		return c.WriteConfigAs(filepath.Join(c.configPath, "config.yaml"))
+	}
+	return werr
+}

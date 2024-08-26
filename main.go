@@ -13,7 +13,6 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
 	wailsruntime "github.com/wailsapp/wails/v2/pkg/runtime"
-	"github.com/woogles-io/liwords/rpc/api/proto/ipc"
 )
 
 //go:embed all:frontend/dist
@@ -62,7 +61,8 @@ func main() {
 }
 
 func (a *App) startNewGame(d *menu.CallbackData) {
-	gdoc, err := a.NewGame("NWL23", "CrosswordGame", "english", ipc.ChallengeRule_ChallengeRule_DOUBLE, "Cesitar", "Luqui")
+	// XXX nothing
+	gdoc, err := a.NewGame("NWL23", "CrosswordGame", "english", "DOUBLE", "Cesitar", "Luqui")
 	if err != nil {
 		println("Error starting new game:", err.Error())
 	}

@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { ActiveGame, Config } from "../wailsjs/go/main/App";
 import "@mantine/core/styles.css";
-import { AppShell, Burger, Group, Skeleton } from "@mantine/core";
+import { AppShell, Burger, Group, NavLink, Skeleton } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 
 import { Button, createTheme, MantineProvider, TextInput } from "@mantine/core";
-import Board from "./board/board";
-import { ipc, main } from "../wailsjs/go/models";
+import { ipc } from "../wailsjs/go/models";
 import BoardScene from "./board/three/board_scene";
+import { NewGameAction } from "./newgame";
+import { SettingsAction } from "./settings";
 
 const theme = createTheme({
   fontFamily: "Open Sans, sans-serif",
@@ -15,14 +16,14 @@ const theme = createTheme({
 });
 
 function App() {
-  const [config, setConfig] = useState<main.Config>();
+  const [config, setConfig] = useState<{ [key: string]: any }>();
   const [activeGame, setActiveGame] = useState<ipc.GameDocument>();
   const [opened, { toggle }] = useDisclosure();
   const [is2D, setIs2D] = useState(true);
 
   useEffect(() => {
     Config().then((cfg) => {
-      console.log("settin cfg");
+      console.log("settin cfg", cfg);
       setConfig(cfg);
     });
 
@@ -58,12 +59,8 @@ function App() {
             </Group>
           </AppShell.Header>
           <AppShell.Navbar p="md">
-            Navbar
-            {Array(15)
-              .fill(0)
-              .map((_, index) => (
-                <Skeleton key={index} h={28} mt="sm" animate={false} />
-              ))}
+            <NewGameAction />
+            <SettingsAction config={config} />
           </AppShell.Navbar>
           <AppShell.Main>
             <BoardScene is2D={is2D} />

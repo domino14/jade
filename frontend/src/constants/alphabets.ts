@@ -37,6 +37,14 @@ export type Alphabet = {
   longestPossibleTileRune: number;
 };
 
+export const UndefinedAlphabet: Alphabet = {
+  letters: [],
+  letterMap: {},
+  machineLetterMap: {},
+  shortcutMap: {},
+  longestPossibleTileRune: 0,
+};
+
 export const StandardEnglishAlphabet: Alphabet = {
   letters: [
     { rune: Blank, score: 0, count: 2, vowel: false, category: 3 },
@@ -624,7 +632,7 @@ export const alphabetFromName = (
     case "polish":
       return StandardPolishAlphabet;
     default:
-      return StandardEnglishAlphabet;
+      return UndefinedAlphabet;
   }
 };
 

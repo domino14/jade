@@ -26,7 +26,7 @@ const tileDepth = 1;
 const offset = (gridSize * squareSize) / 2 - squareSize / 2; // 35 ? why?
 
 const rackHeight = 3;
-const rackWidth = 40;
+const rackWidth = 50;
 const rackDepth = 7;
 const rackYPos = -38;
 const boardTileZPos = boardThickness / 2 + gridHeight;
@@ -105,7 +105,7 @@ function StylishArrow() {
 const RackTile = (props: RackTileProps) => {
   let xpos =
     -rackWidth / 2 +
-    props.gridSquareSize +
+    2 * props.gridSquareSize +
     props.pos * (props.gridSquareSize - 0.6);
   let ypos = rackYPos - props.gridSquareSize - 0.9;
   let zpos = 1.8;
