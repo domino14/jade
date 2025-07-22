@@ -1,7 +1,7 @@
 import React from "react";
 import { FontLoader, Font } from "three/examples/jsm/loaders/FontLoader";
 import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry";
-import { Canvas, extend, Object3DNode, useLoader } from "@react-three/fiber";
+import { Canvas, extend, useLoader } from "@react-three/fiber";
 import { Extrude } from "@react-three/drei";
 import * as THREE from "three";
 
@@ -9,7 +9,7 @@ extend({ TextGeometry });
 
 declare module "@react-three/fiber" {
   interface ThreeElements {
-    textGeometry: Object3DNode<TextGeometry, typeof TextGeometry>;
+    textGeometry: any;
   }
 }
 
@@ -62,8 +62,8 @@ const Tile: React.FC<TileProps> = ({
       <Extrude args={[shape, extrudeSettings]} position={[0, 0, 0]}>
         <meshPhongMaterial
           attach="material"
-          color={0x0000ff}
-          specular={0x00bdff}
+          color={0xffa500}
+          specular={0xffdd77}
           shininess={15}
         />
       </Extrude>
@@ -74,21 +74,29 @@ const Tile: React.FC<TileProps> = ({
           tileDepth,
         ]}
       >
-        <textGeometry args={[letter, { font: font, size: 2.6, height: 0.1 }]} />
-        <meshBasicMaterial attach="material" color={0xdddddd} />
+        <textGeometry args={[letter, { 
+          font: font, 
+          size: Math.min(2.6, width * 0.6), 
+          depth: 0.1,
+          curveSegments: 12,
+          bevelEnabled: false
+        }]} />
+        <meshBasicMaterial attach="material" color={0x000000} />
       </mesh>
-      <mesh
-        position={[
-          (score >= 10 ? 0.62 : 0.75) * width,
-          0.1 * height,
-          tileDepth,
-        ]}
-      >
-        <textGeometry
-          args={[score.toString(), { font: font, size: 1, height: 0.1 }]}
-        />
-        <meshBasicMaterial attach="material" color={0xdddddd} />
-      </mesh>
+      {score > 0 && (
+        <mesh
+          position={[
+            (score >= 10 ? 0.62 : 0.75) * width,
+            0.1 * height,
+            tileDepth,
+          ]}
+        >
+          <textGeometry
+            args={[score.toString(), { font: font, size: 1, depth: 0.1 }]}
+          />
+          <meshBasicMaterial attach="material" color={0x000000} />
+        </mesh>
+      )}
     </group>
   );
 };

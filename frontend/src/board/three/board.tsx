@@ -1,6 +1,8 @@
 import * as THREE from "three";
 import { BonusType } from "../../constants/board_layout";
 import { Box, Cylinder } from "@react-three/drei";
+import { useLoader } from "@react-three/fiber";
+import { FontLoader } from "three/examples/jsm/loaders/FontLoader";
 import React from "react";
 
 const boardColor = 0x00ffbd;
@@ -14,6 +16,18 @@ const bonusColors = {
   [BonusType.QuadrupleLetter]: 0x99ff99,
   [BonusType.StartingSquare]: 0x000000, // doesn't have a color
 };
+
+const bonusLabels = {
+  [BonusType.TripleWord]: "3x",
+  [BonusType.DoubleWord]: "2x",
+  [BonusType.TripleLetter]: "3x",
+  [BonusType.DoubleLetter]: "2x",
+  [BonusType.QuadrupleWord]: "4x",
+  [BonusType.QuadrupleLetter]: "4x",
+  [BonusType.StartingSquare]: "",
+};
+
+const fontURL = "https://threejs.org/examples/fonts/helvetiker_regular.typeface.json";
 
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
@@ -37,6 +51,8 @@ type GameBoardProps = {
 };
 
 const GameBoard = (props: GameBoardProps) => {
+  const font = useLoader(FontLoader, fontURL);
+
   const createWalls = (
     i: number,
     j: number,
@@ -160,6 +176,38 @@ const GameBoard = (props: GameBoardProps) => {
                 props.squareSize,
                 0.25,
                 0.55
+              )}
+
+              {/* Add bonus square labels */}
+              {bonusSquare !== BonusType.NoBonus && bonusLabels[bonusSquare] && (
+                <mesh
+                  position={[
+                    i * props.squareSize - props.offset - props.squareSize * 0.15, // Center horizontally (adjust for text width)
+                    j * props.squareSize - props.offset - props.squareSize * 0.1, // Center vertically
+                    gridBottomZPos + props.gridHeight + 0.01,
+                  ]}
+                >
+                  <textGeometry args={[bonusLabels[bonusSquare], { 
+                    font: font, 
+                    size: 1.2, 
+                    depth: 0.02,
+                    curveSegments: 4,
+                    bevelEnabled: false
+                  }]} />
+                  <meshBasicMaterial 
+                    attach="material" 
+                    color={
+                      // Use a slightly darker version of the square color for subtle visibility
+                      bonusSquare === BonusType.TripleWord ? 0xcc2222 :
+                      bonusSquare === BonusType.DoubleWord ? 0xcc6666 :
+                      bonusSquare === BonusType.TripleLetter ? 0x2222cc :
+                      bonusSquare === BonusType.DoubleLetter ? 0x3a9bc1 :
+                      bonusSquare === BonusType.QuadrupleWord ? 0x1bcc1b :
+                      bonusSquare === BonusType.QuadrupleLetter ? 0x66cc66 :
+                      0x666666
+                    }
+                  />
+                </mesh>
               )}
             </React.Fragment>
           );

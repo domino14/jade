@@ -65,8 +65,9 @@ function App() {
           <AppShell.Main>
             <BoardScene is2D={is2D} />
           </AppShell.Main>
-          <AppShell.Aside p="md">Aside</AppShell.Aside>
-          <AppShell.Footer p="md">Footer</AppShell.Footer>
+          <AppShell.Aside p="md">
+            Unseen tiles: ? A A D D E E E H H J L L M N R S T T V W
+          </AppShell.Aside>
         </AppShell>
       </div>
     </MantineProvider>
