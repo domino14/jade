@@ -59,12 +59,16 @@ const Tile: React.FC<TileProps> = ({
 
   return (
     <group>
-      <Extrude args={[shape, extrudeSettings]} position={[0, 0, 0]}>
-        <meshPhongMaterial
+      <Extrude args={[shape, extrudeSettings]} position={[0, 0, 0]} castShadow receiveShadow>
+        <meshStandardMaterial
           attach="material"
           color={0xffa500}
-          specular={0xffdd77}
-          shininess={15}
+          roughness={0.7}  // 0 = mirror-like, 1 = completely matte
+          metalness={0.1}  // slight metallic sheen
+          envMapIntensity={1.5}  // Boost environment reflections
+          // Optional: add more realism
+          // roughnessMap={texture}  // for varying roughness across surface
+          // normalMap={texture}     // for surface detail
         />
       </Extrude>
       <mesh
@@ -73,10 +77,11 @@ const Tile: React.FC<TileProps> = ({
           0.2 * height,
           tileDepth,
         ]}
+        castShadow
       >
-        <textGeometry args={[letter, { 
-          font: font, 
-          size: Math.min(2.6, width * 0.6), 
+        <textGeometry args={[letter, {
+          font: font,
+          size: Math.min(2.6, width * 0.6),
           depth: 0.1,
           curveSegments: 12,
           bevelEnabled: false
@@ -90,6 +95,7 @@ const Tile: React.FC<TileProps> = ({
             0.1 * height,
             tileDepth,
           ]}
+          castShadow
         >
           <textGeometry
             args={[score.toString(), { font: font, size: 1, depth: 0.1 }]}

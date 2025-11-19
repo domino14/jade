@@ -4,6 +4,7 @@ import { Box, Cylinder } from "@react-three/drei";
 import { useLoader } from "@react-three/fiber";
 import { FontLoader } from "three/examples/jsm/loaders/FontLoader";
 import React from "react";
+import { TextureLoader } from "three";
 
 const boardColor = 0x00ffbd;
 
@@ -52,6 +53,16 @@ type GameBoardProps = {
 
 const GameBoard = (props: GameBoardProps) => {
   const font = useLoader(FontLoader, fontURL);
+
+  // Load the decorative board texture
+  // const boardTexture = useLoader(
+  //   TextureLoader,
+  //   "https://lh3.googleusercontent.com/gps-cs-s/AG0ilSzo6PTkUaynnPYxIcDsLCs2nB_x7GlIbFosDTppNhII8gAJnrJ1bI23l5t0_Av_uRfGvOU3G1AZ7D0UMC76J1GVwe9nSQyS9uMrmtoAvrTXDOxuCWa0EmtAcVNuXAiRMfcTGU3W2Q=s1360-w1360-h1020-rw"
+  // );
+
+  // Configure texture for circular board
+  // boardTexture.wrapS = boardTexture.wrapT = THREE.RepeatWrapping;
+  // boardTexture.repeat.set(1, 1);
 
   const createWalls = (
     i: number,
@@ -127,12 +138,17 @@ const GameBoard = (props: GameBoardProps) => {
         args={[55, 55, props.boardThickness, 64]}
         rotation={[Math.PI / 2, 0, 0]}
         position={[0, 0, 0]}
+        receiveShadow
       >
-        <meshPhongMaterial
+        <meshStandardMaterial
           attach="material"
+          // map={boardTexture}
           color={boardColor}
-          specular={0xffffff}
-          shininess={50}
+          roughness={0.6}
+          metalness={0.05}
+          envMapIntensity={0.8}
+          // transparent={true}
+          // opacity={0.3}
         />
       </Cylinder>
 
@@ -157,12 +173,14 @@ const GameBoard = (props: GameBoardProps) => {
                 ]}
                 userData={{ isBoardSquare: true, gridX: i, gridY: j }}
                 onClick={() => props.squareClickHandler(i, j)}
+                receiveShadow
               >
-                <meshPhongMaterial
+                <meshStandardMaterial
                   attach="material"
                   color={squareColor}
-                  specular={squareColor}
-                  shininess={50}
+                  roughness={0.8}
+                  metalness={0.0}
+                  envMapIntensity={0.5}
                 />
               </Box>
 

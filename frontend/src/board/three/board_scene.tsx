@@ -4,7 +4,7 @@ import { Canvas, useLoader } from "@react-three/fiber";
 import GameBoard from "./board";
 import { CrosswordGameGridLayout } from "../../constants/board_layout";
 import Rack, { rackGeomParams } from "./rack";
-import { Extrude, OrbitControls } from "@react-three/drei";
+import { Extrude, OrbitControls, Environment, Box } from "@react-three/drei";
 import Tile from "./tile";
 import Cameras from "./cameras";
 import * as THREE from "three";
@@ -214,8 +214,13 @@ function StylishArrow() {
   };
 
   return (
-    <Extrude args={[arrowShape, extrudeSettings]}>
-      <meshPhongMaterial color={0x00ffbd} specular={0xffffff} shininess={10} />
+    <Extrude args={[arrowShape, extrudeSettings]} castShadow>
+      <meshStandardMaterial
+        color={0x00ffbd}
+        roughness={0.3}
+        metalness={0.4}
+        envMapIntensity={1.2}
+      />
     </Extrude>
   );
 }
@@ -224,13 +229,19 @@ const RackTile = (props: RackTileProps) => {
 
   if (props.is2D) {
     // In 2D mode, lay tiles flat below the board
-    xpos = -rackWidth / 2 + 2 * props.gridSquareSize + props.pos * (props.gridSquareSize - 0.6);
+    xpos =
+      -rackWidth / 2 +
+      2 * props.gridSquareSize +
+      props.pos * (props.gridSquareSize - 0.6);
     ypos = rackYPos - 7; // Move down further to avoid overlapping bottom row
     zpos = boardThickness / 2 + 0.1; // Just above the board surface
     rotation = [0, 0, 0]; // Flat, no rotation
   } else {
     // In 3D mode, tiles on angled rack
-    xpos = -rackWidth / 2 + 2 * props.gridSquareSize + props.pos * (props.gridSquareSize - 0.6);
+    xpos =
+      -rackWidth / 2 +
+      2 * props.gridSquareSize +
+      props.pos * (props.gridSquareSize - 0.6);
     ypos = rackYPos - props.gridSquareSize - 0.9;
     zpos = 1.8;
     rotation = [-Math.atan(props.rackSlope), 0, 0];
@@ -329,19 +340,22 @@ const BoardScene = (props: BoardSceneProps) => {
 
   const rackTiles = useMemo(() => {
     // Use the game's alphabet, or fall back to StandardEnglishAlphabet for demo tiles
-    const effectiveAlphabet = alphabet === UndefinedAlphabet ? StandardEnglishAlphabet : alphabet;
+    const effectiveAlphabet =
+      alphabet === UndefinedAlphabet ? StandardEnglishAlphabet : alphabet;
 
-    return rack.split('').map((letter, idx) => (
-      <RackTile
-        key={`rack-${idx}`}
-        pos={idx}
-        gridSquareSize={squareSize}
-        letter={letter}
-        score={scoreFor(effectiveAlphabet, englishLetterToML(letter))}
-        rackSlope={rackSlope}
-        is2D={props.is2D}
-      />
-    ));
+    return rack
+      .split("")
+      .map((letter, idx) => (
+        <RackTile
+          key={`rack-${idx}`}
+          pos={idx}
+          gridSquareSize={squareSize}
+          letter={letter}
+          score={scoreFor(effectiveAlphabet, englishLetterToML(letter))}
+          rackSlope={rackSlope}
+          is2D={props.is2D}
+        />
+      ));
   }, [rack, props.is2D, alphabet]);
 
   const renderedTiles = useMemo(() => {
@@ -405,12 +419,155 @@ const BoardScene = (props: BoardSceneProps) => {
     <Canvas
       style={{ width: "100%", height: "90vh" }}
       id="boardEl"
-      // gl={{ antialias: false }} // Disable antialiasing
+      shadows
+      gl={{
+        antialias: true,
+        toneMapping: THREE.ACESFilmicToneMapping,
+        toneMappingExposure: 1.2,
+      }}
     >
       <Cameras is2D={props.is2D} />
-      <ambientLight intensity={0.5} />
-      <directionalLight position={[0, 10, 200]} intensity={0.5} />
-      <directionalLight position={[0, 200, 200]} intensity={0.5} />
+
+      {/* Environment map for realistic reflections with forest background */}
+      <Environment
+        preset="park"
+        background={true}
+        backgroundBlurriness={0.5}
+        backgroundIntensity={0.5}
+      />
+
+      {/* Enhanced lighting setup */}
+      <ambientLight intensity={0.3} />
+      <directionalLight
+        position={[50, 100, 50]}
+        intensity={1.5}
+        castShadow
+        shadow-mapSize-width={2048}
+        shadow-mapSize-height={2048}
+        shadow-camera-far={500}
+        shadow-camera-left={-100}
+        shadow-camera-right={100}
+        shadow-camera-top={100}
+        shadow-camera-bottom={-100}
+      />
+      <directionalLight position={[-30, 50, -30]} intensity={0.5} />
+      <pointLight position={[0, 20, 30]} intensity={0.5} color="#fff8e7" />
+
+      {/* Table */}
+      <group>
+        {/* Table top */}
+        <Box
+          args={[160, 140, 4]}
+          position={[0, 0, -boardThickness / 2 - 2]}
+          receiveShadow
+          castShadow
+        >
+          <meshStandardMaterial
+            color="#8B4513"
+            roughness={0.6}
+            metalness={0.1}
+            envMapIntensity={0.7}
+          />
+        </Box>
+
+        {/* Table legs */}
+        {/* Front left leg */}
+        <Box
+          args={[4, 4, 40]}
+          position={[-70, -60, -boardThickness / 2 - 22]}
+          castShadow
+        >
+          <meshStandardMaterial
+            color="#654321"
+            roughness={0.5}
+            metalness={0.1}
+          />
+        </Box>
+
+        {/* Front right leg */}
+        <Box
+          args={[4, 4, 40]}
+          position={[70, -60, -boardThickness / 2 - 22]}
+          castShadow
+        >
+          <meshStandardMaterial
+            color="#654321"
+            roughness={0.5}
+            metalness={0.1}
+          />
+        </Box>
+
+        {/* Back left leg */}
+        <Box
+          args={[4, 4, 40]}
+          position={[-70, 60, -boardThickness / 2 - 22]}
+          castShadow
+        >
+          <meshStandardMaterial
+            color="#654321"
+            roughness={0.5}
+            metalness={0.1}
+          />
+        </Box>
+
+        {/* Back right leg */}
+        <Box
+          args={[4, 4, 40]}
+          position={[70, 60, -boardThickness / 2 - 22]}
+          castShadow
+        >
+          <meshStandardMaterial
+            color="#654321"
+            roughness={0.5}
+            metalness={0.1}
+          />
+        </Box>
+      </group>
+
+      {/* Chess Clock */}
+      <group
+        position={[65, 0, -boardThickness / 2 + 1]}
+        rotation={[0, 0, Math.PI / 2]}
+      >
+        {/* Clock base */}
+        <Box args={[15, 10, 2]} position={[0, 0, 0]} castShadow receiveShadow>
+          <meshStandardMaterial
+            color="#2C2C2C"
+            roughness={0.4}
+            metalness={0.3}
+          />
+        </Box>
+
+        {/* Left button */}
+        <Box args={[6, 4, 1]} position={[-4, 0, 1.5]} castShadow>
+          <meshStandardMaterial
+            color="#1A1A1A"
+            roughness={0.3}
+            metalness={0.2}
+          />
+        </Box>
+
+        {/* Right button */}
+        <Box args={[6, 4, 1]} position={[4, 0, 1.5]} castShadow>
+          <meshStandardMaterial
+            color="#1A1A1A"
+            roughness={0.3}
+            metalness={0.2}
+          />
+        </Box>
+
+        {/* Display screen in middle */}
+        <Box args={[2, 8, 0.5]} position={[0, 0, 1.8]} castShadow>
+          <meshStandardMaterial
+            color="#00FF00"
+            emissive="#00AA00"
+            emissiveIntensity={0.5}
+            roughness={0.2}
+            metalness={0.8}
+          />
+        </Box>
+      </group>
+
       <GameBoard
         layout={CrosswordGameGridLayout} /* get from elsewhere */
         boardThickness={boardThickness}
@@ -471,12 +628,11 @@ const BoardScene = (props: BoardSceneProps) => {
       )}
 
       {/* Show rack tiles from game data if available, otherwise show example rack */}
-      {props.onTurnRack && props.onTurnRack.length > 0 ? renderedRackTiles : rackTiles}
+      {props.onTurnRack && props.onTurnRack.length > 0
+        ? renderedRackTiles
+        : rackTiles}
 
-      <OrbitControls
-        enableDamping={false}
-        target={[0, -10, 0]}
-      />
+      <OrbitControls enableDamping={false} target={[0, -10, 0]} />
     </Canvas>
   );
 };

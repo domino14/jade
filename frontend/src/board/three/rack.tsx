@@ -83,12 +83,15 @@ const Rack = (props: RackProps) => {
       args={[shape, extrudeSettings]}
       position={[x, y, z]}
       rotation={[Math.PI / 2, (3 * Math.PI) / 2, 0]}
+      receiveShadow
+      castShadow
     >
-      <meshPhongMaterial
+      <meshStandardMaterial
         attach="material"
-        color={0xffd700}
-        specular={0xffd700}
-        shininess={1200}
+        color={0xc8a850}
+        roughness={0.4}
+        metalness={0.2}
+        envMapIntensity={1.0}
       />
     </Extrude>
   );
