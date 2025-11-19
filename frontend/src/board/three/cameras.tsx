@@ -67,7 +67,7 @@ const Cameras: React.FC<CamerasProps> = ({ is2D }) => {
     <>
       <PerspectiveCamera position={[0, -60, 90]} fov={50} makeDefault={!is2D} />
       <OrthographicCamera
-        position={[0, -60, 90]}
+        position={[0, -10, 100]}
         zoom={1}
         left={orthoBounds.left}
         right={orthoBounds.right}

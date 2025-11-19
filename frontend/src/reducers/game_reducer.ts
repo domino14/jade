@@ -1,6 +1,7 @@
-import { ipc } from "../../wailsjs/go/models";
 import { Alphabet, runesToMachineWord } from "../constants/alphabets";
 import { CrosswordGameGridLayout } from "../constants/board_layout";
+import { GameDocument, GameDocumentSchema, GameEvent } from "../gen/api/proto/ipc/omgwords_pb";
+import { create } from "@bufbuild/protobuf";
 import { Board } from "../utils/cwgame/board";
 import {
   MachineLetter,
@@ -43,14 +44,14 @@ export type GameState = {
   // The unseen tiles to the user (bag and opp's tiles)
   pool: TileDistribution;
   onturn: number; // index in players
-  turns: Array<ipc.GameEvent>;
+  turns: Array<GameEvent>;
   gameID: string;
   lastPlayedTiles: PlayedTiles;
   playerOfTileAt: PlayerOfTiles; // not cleaned up after challenges
   nickToPlayerOrder: { [nick: string]: PlayerOrder };
   uidToPlayerOrder: { [uid: string]: PlayerOrder };
   playState: PlayState;
-  gameDocument: ipc.GameDocument;
+  gameDocument: GameDocument;
 };
 
 const makePool = (alphabet: Alphabet): TileDistribution => {
@@ -71,7 +72,7 @@ export const startingGameState = (
     board: new Board(layout),
     alphabet,
     pool: makePool(alphabet),
-    turns: new Array<ipc.GameEvent>(),
+    turns: new Array<GameEvent>(),
     players,
     onturn: 0,
     gameID,
@@ -80,7 +81,7 @@ export const startingGameState = (
     nickToPlayerOrder: {},
     uidToPlayerOrder: {},
     playState: PlayState.GAME_OVER,
-    gameDocument: new ipc.GameDocument(),
+    gameDocument: create(GameDocumentSchema),
   };
   return gs;
 };

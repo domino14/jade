@@ -12,10 +12,16 @@ import { useDisclosure } from "@mantine/hooks";
 import { IconCirclePlusFilled } from "@tabler/icons-react";
 import { alphabetFromName, UndefinedAlphabet } from "./constants/alphabets";
 import { NewGame } from "../wailsjs/go/main/App";
+import { GameDocument, GameDocumentSchema } from "./gen/api/proto/ipc/omgwords_pb";
+import { fromBinary } from "@bufbuild/protobuf";
 
 const ChallengeRules = ["FIVE_POINT", "TEN_POINT", "DOUBLE", "SINGLE"];
 
-export const NewGameAction = () => {
+type NGProps = {
+  setNewGame: (g: GameDocument) => void;
+};
+
+export const NewGameAction = (props: NGProps) => {
   const [opened, { open, close, toggle }] = useDisclosure();
 
   const form = useForm({
@@ -48,8 +54,11 @@ export const NewGameAction = () => {
               values.challengeRule,
               values.player1,
               values.player2
-            ).then((ret) => {
-              console.log("ret is", ret);
+            ).then((ret: Array<number>) => {
+              // Parse as protobuf!
+              const doc = fromBinary(GameDocumentSchema, Uint8Array.from(ret));
+              console.log("gdoc", doc);
+              props.setNewGame(doc);
             });
           })}
         >

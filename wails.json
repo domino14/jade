@@ -9,5 +9,16 @@
     "author": {
         "name": "César Del Solar",
         "email": "delsolar@gmail.com"
+    },
+    "info": {
+        "fileAssociations": [
+            {
+                "ext": "gcg",
+                "name": "GCG",
+                "description": "Generic Crossword Game file",
+                "iconName": "appicon",
+                "role": "Editor"
+            }
+        ]
     }
 }

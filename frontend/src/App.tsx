@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
-import { ActiveGame, Config } from "../wailsjs/go/main/App";
+import { Config } from "../wailsjs/go/main/App";
 import "@mantine/core/styles.css";
 import { AppShell, Burger, Group, NavLink, Skeleton } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 
 import { Button, createTheme, MantineProvider, TextInput } from "@mantine/core";
-import { ipc } from "../wailsjs/go/models";
 import BoardScene from "./board/three/board_scene";
 import { NewGameAction } from "./newgame";
 import { SettingsAction } from "./settings";
+import { GameDocument } from "./gen/api/proto/ipc/omgwords_pb";
 
 const theme = createTheme({
   fontFamily: "Open Sans, sans-serif",
@@ -17,7 +17,7 @@ const theme = createTheme({
 
 function App() {
   const [config, setConfig] = useState<{ [key: string]: any }>();
-  const [activeGame, setActiveGame] = useState<ipc.GameDocument>();
+  const [activeGame, setActiveGame] = useState<GameDocument>();
   const [opened, { toggle }] = useDisclosure();
   const [is2D, setIs2D] = useState(true);
 
@@ -26,8 +26,6 @@ function App() {
       console.log("settin cfg", cfg);
       setConfig(cfg);
     });
-
-    ActiveGame().then((ag) => setActiveGame(ag));
   }, []);
   return (
     <MantineProvider theme={theme} defaultColorScheme="dark">
@@ -59,11 +57,20 @@ function App() {
             </Group>
           </AppShell.Header>
           <AppShell.Navbar p="md">
-            <NewGameAction />
+            <NewGameAction setNewGame={(g) => setActiveGame(g)} />
             <SettingsAction config={config} />
           </AppShell.Navbar>
           <AppShell.Main>
-            <BoardScene is2D={is2D} />
+            <BoardScene
+              is2D={is2D}
+              board={activeGame?.board}
+              letterDistribution={activeGame?.letterDistribution}
+              onTurnRack={
+                activeGame && activeGame.racks && activeGame.playerOnTurn
+                  ? activeGame.racks[activeGame.playerOnTurn]
+                  : new Uint8Array()
+              }
+            />
           </AppShell.Main>
           <AppShell.Aside p="md">
             Unseen tiles: ? A A D D E E E H H J L L M N R S T T V W

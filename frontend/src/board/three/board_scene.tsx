@@ -9,18 +9,21 @@ import Tile from "./tile";
 import Cameras from "./cameras";
 import * as THREE from "three";
 import { FontLoader } from "three/examples/jsm/loaders/FontLoader";
-import { ipc } from "../../../wailsjs/go/models";
-import { Board } from "../../utils/cwgame/board";
 import {
+  alphabetFromName,
   englishLetterToML,
+  machineLetterToRune,
   scoreFor,
   StandardEnglishAlphabet,
+  UndefinedAlphabet,
 } from "../../constants/alphabets";
+import { GameBoard as ipcGameBoard } from "../../gen/api/proto/ipc/omgwords_pb";
 
 type BoardSceneProps = {
   is2D: boolean;
-  board?: ipc.GameBoard;
-  rack?: number[];
+  board?: ipcGameBoard;
+  onTurnRack?: Uint8Array;
+  letterDistribution?: string;
 };
 
 const gridSize = 15;
@@ -54,15 +57,32 @@ type RackTileProps = {
   letter: string;
   score: number;
   rackSlope: number;
+  is2D: boolean;
 };
 const fontURL =
   "https://threejs.org/examples/fonts/helvetiker_regular.typeface.json";
 
 // Column labels component
 const ColumnLabels = () => {
-  const columns = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O'];
+  const columns = [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F",
+    "G",
+    "H",
+    "I",
+    "J",
+    "K",
+    "L",
+    "M",
+    "N",
+    "O",
+  ];
   const font = useLoader(FontLoader, fontURL);
-  
+
   return (
     <group>
       {columns.map((letter, index) => (
@@ -71,16 +91,21 @@ const ColumnLabels = () => {
           position={[
             index * squareSize - offset - squareSize / 4,
             offset + squareSize * 0.8,
-            boardThickness / 2 + 0.01
+            boardThickness / 2 + 0.01,
           ]}
         >
-          <textGeometry args={[letter, { 
-            font: font, 
-            size: 1.875, 
-            depth: 0.05,
-            curveSegments: 8,
-            bevelEnabled: false
-          }]} />
+          <textGeometry
+            args={[
+              letter,
+              {
+                font: font,
+                size: 1.875,
+                depth: 0.05,
+                curveSegments: 8,
+                bevelEnabled: false,
+              },
+            ]}
+          />
           <meshBasicMaterial attach="material" color={0x666666} />
         </mesh>
       ))}
@@ -88,33 +113,54 @@ const ColumnLabels = () => {
   );
 };
 
-// Row labels component  
+// Row labels component
 const RowLabels = () => {
-  const rows = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15'];
+  const rows = [
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9",
+    "10",
+    "11",
+    "12",
+    "13",
+    "14",
+    "15",
+  ];
   const font = useLoader(FontLoader, fontURL);
-  
+
   return (
     <group>
       {rows.map((number, index) => {
         // Calculate text width for right alignment (rough approximation)
         const textWidth = number.length * 1.5; // Approximate character width
-        
+
         return (
           <mesh
             key={number}
             position={[
               -offset - squareSize * 0.65 - textWidth, // Moved 1/4 square to the right (from 0.9 to 0.65)
               (14 - index) * squareSize - offset - squareSize / 4, // Moved up by quarter square (from + 0.3 to - squareSize / 4)
-              boardThickness / 2 + 0.01
+              boardThickness / 2 + 0.01,
             ]}
           >
-            <textGeometry args={[number, { 
-              font: font, 
-              size: 1.875, 
-              depth: 0.05,
-              curveSegments: 8,
-              bevelEnabled: false
-            }]} />
+            <textGeometry
+              args={[
+                number,
+                {
+                  font: font,
+                  size: 1.875,
+                  depth: 0.05,
+                  curveSegments: 8,
+                  bevelEnabled: false,
+                },
+              ]}
+            />
             <meshBasicMaterial attach="material" color={0x666666} />
           </mesh>
         );
@@ -174,17 +220,26 @@ function StylishArrow() {
   );
 }
 const RackTile = (props: RackTileProps) => {
-  let xpos =
-    -rackWidth / 2 +
-    2 * props.gridSquareSize +
-    props.pos * (props.gridSquareSize - 0.6);
-  let ypos = rackYPos - props.gridSquareSize - 0.9;
-  let zpos = 1.8;
+  let xpos, ypos, zpos, rotation;
+
+  if (props.is2D) {
+    // In 2D mode, lay tiles flat below the board
+    xpos = -rackWidth / 2 + 2 * props.gridSquareSize + props.pos * (props.gridSquareSize - 0.6);
+    ypos = rackYPos - 7; // Move down further to avoid overlapping bottom row
+    zpos = boardThickness / 2 + 0.1; // Just above the board surface
+    rotation = [0, 0, 0]; // Flat, no rotation
+  } else {
+    // In 3D mode, tiles on angled rack
+    xpos = -rackWidth / 2 + 2 * props.gridSquareSize + props.pos * (props.gridSquareSize - 0.6);
+    ypos = rackYPos - props.gridSquareSize - 0.9;
+    zpos = 1.8;
+    rotation = [-Math.atan(props.rackSlope), 0, 0];
+  }
 
   return (
     <group
       position={[xpos, ypos, zpos]}
-      rotation={[-Math.atan(props.rackSlope), 0, 0]}
+      rotation={rotation as [number, number, number]}
     >
       <Tile
         fontUrl={fontURL}
@@ -242,6 +297,11 @@ const BoardScene = (props: BoardSceneProps) => {
     vertical: false,
     show: false,
   });
+  const tiles = props.board?.tiles;
+  const alphabet = useMemo(
+    () => alphabetFromName(props.letterDistribution),
+    [props.letterDistribution]
+  );
 
   const squareClickHandler = useCallback(
     (i: number, j: number) => {
@@ -262,11 +322,84 @@ const BoardScene = (props: BoardSceneProps) => {
     [arrow]
   );
 
-  const alphabet = StandardEnglishAlphabet;
   const fen =
     "I6BANISTER/N4ZOO3A3/OUGIYA5L3/S2TOPEE2AI3/I9UN3/t9KI3/O7F2T3/L6MERCY3/8R6/8R2V3/2OOF3I1WAG2/3DEPURATES3/8G6/8EX5/9UNCIAE";
-  const rack = "DEGNNRU";
+  const rack = "BDEINOQ";
   const boardArray = useMemo(() => parseFEN(fen), [fen]);
+
+  const rackTiles = useMemo(() => {
+    // Use the game's alphabet, or fall back to StandardEnglishAlphabet for demo tiles
+    const effectiveAlphabet = alphabet === UndefinedAlphabet ? StandardEnglishAlphabet : alphabet;
+
+    return rack.split('').map((letter, idx) => (
+      <RackTile
+        key={`rack-${idx}`}
+        pos={idx}
+        gridSquareSize={squareSize}
+        letter={letter}
+        score={scoreFor(effectiveAlphabet, englishLetterToML(letter))}
+        rackSlope={rackSlope}
+        is2D={props.is2D}
+      />
+    ));
+  }, [rack, props.is2D, alphabet]);
+
+  const renderedTiles = useMemo(() => {
+    if (tiles == undefined) {
+      return <></>;
+    }
+    console.log("tiles", tiles, tiles.length);
+    const rendered = [];
+    for (let idx = 0; idx < tiles.length; idx++) {
+      if (tiles[idx] === 0) {
+        continue;
+      }
+      if (alphabet === UndefinedAlphabet) {
+        return <></>;
+      }
+      const letter = machineLetterToRune(tiles[idx], alphabet);
+      rendered.push(
+        <BoardTile
+          gridPosX={idx % gridSize}
+          gridPosY={Math.floor(idx / gridSize)}
+          gridSquareSize={squareSize}
+          letter={letter}
+          score={scoreFor(alphabet, tiles[idx])}
+          offset={offset}
+          key={`t${idx}`}
+        />
+      );
+    }
+    return <>{rendered}</>;
+  }, [tiles]);
+
+  const renderedRackTiles = useMemo(() => {
+    if (!props.onTurnRack || props.onTurnRack.length === 0) {
+      return <></>;
+    }
+    const rendered = [];
+    for (let idx = 0; idx < props.onTurnRack.length; idx++) {
+      if (props.onTurnRack[idx] === 0) {
+        continue;
+      }
+      if (alphabet === UndefinedAlphabet) {
+        return <></>;
+      }
+      const letter = machineLetterToRune(props.onTurnRack[idx], alphabet);
+      rendered.push(
+        <RackTile
+          pos={idx}
+          gridSquareSize={squareSize}
+          letter={letter}
+          score={scoreFor(alphabet, props.onTurnRack[idx])}
+          rackSlope={rackSlope}
+          is2D={props.is2D}
+          key={`rt${idx}`}
+        />
+      );
+    }
+    return <>{rendered}</>;
+  }, [props.onTurnRack, props.is2D]);
 
   return (
     <Canvas
@@ -279,7 +412,7 @@ const BoardScene = (props: BoardSceneProps) => {
       <directionalLight position={[0, 10, 200]} intensity={0.5} />
       <directionalLight position={[0, 200, 200]} intensity={0.5} />
       <GameBoard
-        layout={CrosswordGameGridLayout}
+        layout={CrosswordGameGridLayout} /* get from elsewhere */
         boardThickness={boardThickness}
         gridSize={gridSize}
         squareSize={squareSize}
@@ -288,7 +421,7 @@ const BoardScene = (props: BoardSceneProps) => {
         squareClickHandler={squareClickHandler}
         arrow={arrow}
       />
-      
+
       {/* Board labels */}
       <ColumnLabels />
       <RowLabels />
@@ -310,14 +443,16 @@ const BoardScene = (props: BoardSceneProps) => {
         </group>
       )}
 
-      <Rack
-        rackWidth={rackWidth}
-        rackHeight={rackHeight}
-        rackDepth={rackDepth}
-        x={rackWidth / 2}
-        y={rackYPos}
-        z={boardThickness / 2}
-      />
+      {!props.is2D && (
+        <Rack
+          rackWidth={rackWidth}
+          rackHeight={rackHeight}
+          rackDepth={rackDepth}
+          x={rackWidth / 2}
+          y={rackYPos}
+          z={boardThickness / 2}
+        />
+      )}
 
       {boardArray.map((row, y) =>
         row.map((tile, x) =>
@@ -335,62 +470,13 @@ const BoardScene = (props: BoardSceneProps) => {
         )
       )}
 
-      <RackTile
-        pos={0}
-        gridSquareSize={squareSize}
-        letter="B"
-        score={3}
-        rackSlope={rackSlope}
-      />
+      {/* Show rack tiles from game data if available, otherwise show example rack */}
+      {props.onTurnRack && props.onTurnRack.length > 0 ? renderedRackTiles : rackTiles}
 
-      <RackTile
-        pos={1}
-        gridSquareSize={squareSize}
-        letter="D"
-        score={2}
-        rackSlope={rackSlope}
+      <OrbitControls
+        enableDamping={false}
+        target={[0, -10, 0]}
       />
-
-      <RackTile
-        pos={2}
-        gridSquareSize={squareSize}
-        letter="E"
-        score={1}
-        rackSlope={rackSlope}
-      />
-
-      <RackTile
-        pos={3}
-        gridSquareSize={squareSize}
-        letter="I"
-        score={1}
-        rackSlope={rackSlope}
-      />
-
-      <RackTile
-        pos={4}
-        gridSquareSize={squareSize}
-        letter="N"
-        score={1}
-        rackSlope={rackSlope}
-      />
-
-      <RackTile
-        pos={5}
-        gridSquareSize={squareSize}
-        letter="O"
-        score={1}
-        rackSlope={rackSlope}
-      />
-      <RackTile
-        pos={6}
-        gridSquareSize={squareSize}
-        letter="Q"
-        score={10}
-        rackSlope={rackSlope}
-      />
-
-      <OrbitControls enableDamping={false} target={[0, -10, 0]} />
     </Canvas>
   );
 };
